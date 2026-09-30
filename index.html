@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABYSSUS VECTORFORGE™ - XML READER & RENAMER</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0f;
+            font-family: 'Segoe UI', 'Courier New', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #e0e0ff;
+        }
+
+        /* Archon Header */
+        .archon-header {
+            background: linear-gradient(135deg, #000510 0%, #0f172a 100%);
+            border-bottom: 2px solid #4f46e5;
+            padding: 1rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .archon-header::before {
+            content: "⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            color: #4f46e5;
+            opacity: 0.3;
+            font-size: 12px;
+            letter-spacing: 4px;
+        }
+
+        .archon-title {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(79, 70, 229, 0.5);
+        }
+
+        .archon-sub {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            letter-spacing: 2px;
+            margin-top: 4px;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 2rem;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: #4ade80;
+            border-top: 1px solid #1e293b;
+            padding-top: 0.5rem;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-led {
+            width: 10px;
+            height: 10px;
+            background: #4ade80;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Main Container - 3 Kolom */
+        .forge-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1.2fr 1fr 1.2fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            max-width: 2000px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Panel Umum */
+        .panel {
+            background: rgba(10, 10, 20, 0.8);
+            border: 1px solid #2d3748;
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 0 40px rgba(79, 70, 229, 0.15);
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0.5rem;
+            color: #cbd5e1;
+            font-size: 1.2rem;
+            border-bottom: 1px solid #2d3748;
+            padding-bottom: 0.8rem;
+        }
+
+        .panel-title span {
+            color: #4f46e5;
+            font-weight: bold;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed #4f46e5;
+            border-radius: 12px;
+            padding: 2rem 1rem;
+            text-align: center;
+            background: rgba(79, 70, 229, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            border-color: #818cf8;
+            background: rgba(79, 70, 229, 0.1);
+            box-shadow: 0 0 30px rgba(79, 70, 229, 0.2);
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 0 10px #4f46e5);
+        }
+
+        .upload-text {
+            color: #9ca3af;
+            font-size: 0.85rem;
+        }
+
+        .upload-text strong {
+            color: #a78bfa;
+        }
+
+        /* Parameters */
+        .param-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .param-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .param-label {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .param-input {
+            background: #1e1e2f;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 0.6rem;
+            color: #e0e0ff;
+            font-family: 'Courier New', monospace;
+        }
+
+        .param-input:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 15px rgba(79, 70, 229, 0.3);
+        }
+
+        .param-input[type="range"] {
+            padding: 0;
+            accent-color: #4f46e5;
+        }
+
+        .value-display {
+            text-align: right;
+            color: #4ade80;
+            font-size: 0.8rem;
+        }
+
+        /* Action Buttons */
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+            margin: 0.5rem 0;
+        }
+
+        .archon-btn {
+            background: linear-gradient(135deg, #1e1e2f, #0f0f1a);
+            border: 1px solid #4f46e5;
+            border-radius: 8px;
+            padding: 0.8rem;
+            color: #e0e0ff;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .archon-btn::before {
+            content: "";
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(135deg, #4f46e5, #818cf8);
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: -1;
+            border-radius: 9px;
+        }
+
+        .archon-btn:hover {
+            background: transparent;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(79, 70, 229, 0.5);
+        }
+
+        .archon-btn:hover::before {
+            opacity: 0.3;
+        }
+
+        .archon-btn.primary {
+            background: #4f46e5;
+            border-color: #818cf8;
+            grid-column: span 2;
+        }
+
+        .archon-btn.primary:hover {
+            background: #6366f1;
+        }
+
+        /* Preview Area */
+        .preview-area {
+            background: #0f0f1a;
+            border-radius: 12px;
+            padding: 1rem;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #2d3748;
+        }
+
+        #previewCanvas {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+        }
+
+        /* XML Output */
+        .xml-output {
+            flex: 1;
+            background: #0a0a12;
+            border-radius: 8px;
+            padding: 0.8rem;
+            border: 1px solid #2d3748;
+        }
+
+        .xml-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+        }
+
+        .xml-content {
+            background: #03030a;
+            border-radius: 6px;
+            padding: 0.8rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            color: #a78bfa;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #1e293b;
+        }
+
+        /* Vector Reader Panel */
+        .reader-list {
+            background: #0f0f1a;
+            border-radius: 8px;
+            padding: 0.8rem;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #2d3748;
+        }
+
+        .vector-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.8rem;
+            border-bottom: 1px solid #1e293b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .vector-item:hover {
+            background: rgba(79, 70, 229, 0.1);
+            border-radius: 6px;
+        }
+
+        .vector-item.selected {
+            background: rgba(79, 70, 229, 0.2);
+            border-left: 3px solid #4f46e5;
+        }
+
+        .vector-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .vector-name {
+            color: #a78bfa;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .vector-meta {
+            color: #6b7280;
+            font-size: 0.7rem;
+        }
+
+        .vector-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .vector-btn {
+            background: none;
+            border: 1px solid #2d3748;
+            color: #94a3b8;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+        }
+
+        .vector-btn:hover {
+            border-color: #4f46e5;
+            color: #a78bfa;
+        }
+
+        /* Rename Panel */
+        .rename-panel {
+            background: #0f0f1a;
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid #4f46e5;
+        }
+
+        .rename-input-group {
+            display: flex;
+            gap: 8px;
+            margin: 1rem 0;
+        }
+
+        .rename-input {
+            flex: 1;
+            background: #1e1e2f;
+            border: 1px solid #4f46e5;
+            border-radius: 6px;
+            padding: 0.8rem;
+            color: #e0e0ff;
+            font-family: 'Courier New', monospace;
+        }
+
+        .rename-input:focus {
+            outline: none;
+            box-shadow: 0 0 15px rgba(79, 70, 229, 0.3);
+        }
+
+        .extension-select {
+            background: #1e1e2f;
+            border: 1px solid #4f46e5;
+            border-radius: 6px;
+            padding: 0.8rem;
+            color: #e0e0ff;
+            cursor: pointer;
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        .stat-card {
+            background: #0f0f1a;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 0.8rem;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4ade80;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #6b7280;
+        }
+
+        /* Console Log */
+        .console-log {
+            background: #0a0a12;
+            border: 1px solid #2d3748;
+            border-radius: 8px;
+            padding: 0.8rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.7rem;
+            color: #4ade80;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            border-bottom: 1px solid #1e293b;
+            padding: 0.2rem 0;
+        }
+
+        /* Footer */
+        .archon-footer {
+            text-align: center;
+            padding: 1rem;
+            color: #4b5563;
+            font-size: 0.7rem;
+            border-top: 1px solid #1e293b;
+            letter-spacing: 1px;
+        }
+
+        /* Hidden file input */
+        #fileInput, #xmlFileInput {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Archon Header -->
+    <div class="archon-header">
+        <div class="archon-title">⚛️ ABYSSUS VECTORFORGE™ NEXUS</div>
+        <div class="archon-sub">RASTER → VECTOR XML | XML READER | RENAME ENGINE | NIHILUM FILTER: ∅</div>
+        <div class="status-bar">
+            <div class="status-item"><span class="status-led"></span> QUANTUM_CORE: ACTIVE</div>
+            <div class="status-item"><span class="status-led"></span> XML_LIBRARY: 0 FILES</div>
+            <div class="status-item"><span class="status-led"></span> RENAME_ENGINE: ARMED</div>
+        </div>
+    </div>
+
+    <!-- Main Forge Container - 3 Kolom -->
+    <div class="forge-container">
+        <!-- KOLOM 1: INPUT & PROCESS -->
+        <div class="panel">
+            <div class="panel-title">
+                <span>◈</span> RASTER FORGE <span>◈</span>
+            </div>
+
+            <!-- Upload Area Gambar -->
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">🖼️</div>
+                <div class="upload-text">
+                    <strong>DROP IMAGE HERE</strong> or click to browse<br>
+                    JPG, PNG, GIF, BMP, WEBP
+                </div>
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+
+            <!-- Parameters -->
+            <div class="param-grid">
+                <div class="param-item">
+                    <label class="param-label">THRESHOLD</label>
+                    <input type="range" id="threshold" min="0" max="255" value="128" class="param-input">
+                    <div class="value-display" id="thresholdValue">128</div>
+                </div>
+                <div class="param-item">
+                    <label class="param-label">BLUR (σ)</label>
+                    <input type="range" id="blur" min="0" max="5" step="0.1" value="1" class="param-input">
+                    <div class="value-display" id="blurValue">1.0</div>
+                </div>
+                <div class="param-item">
+                    <label class="param-label">SIMPLIFY</label>
+                    <input type="range" id="simplify" min="0" max="5" step="0.1" value="0.5" class="param-input">
+                    <div class="value-display" id="simplifyValue">0.5</div>
+                </div>
+                <div class="param-item">
+                    <label class="param-label">MODE</label>
+                    <select id="mode" class="param-input">
+                        <option value="bw">BLACK & WHITE</option>
+                        <option value="color">COLOR TRACING</option>
+                        <option value="edge">EDGE DETECTION</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-grid">
+                <button class="archon-btn" id="processBtn">⚡ PROCESS</button>
+                <button class="archon-btn" id="clearBtn">⟲ RESET</button>
+                <button class="archon-btn primary" id="generateBtn">✨ GENERATE & ADD TO LIBRARY</button>
+            </div>
+
+            <!-- Preview -->
+            <div class="preview-area">
+                <canvas id="previewCanvas" width="300" height="150"></canvas>
+            </div>
+
+            <!-- Console Log -->
+            <div class="console-log" id="consoleLog">
+                <div class="log-entry">[SYSTEM] ABYSSUS VECTORFORGE: ARMED</div>
+                <div class="log-entry">[NIHILUS] FILTER_STATUS: ∅</div>
+            </div>
+        </div>
+
+        <!-- KOLOM 2: XML READER & LIBRARY -->
+        <div class="panel">
+            <div class="panel-title">
+                <span>◈</span> VECTOR XML READER <span>◈</span>
+            </div>
+
+            <!-- Upload XML Area -->
+            <div class="upload-area" id="xmlUploadArea" style="padding: 1.5rem;">
+                <div class="upload-icon">📂</div>
+                <div class="upload-text">
+                    <strong>UPLOAD XML / SVG</strong><br>
+                    or drag & drop here
+                </div>
+                <input type="file" id="xmlFileInput" accept=".xml,.svg">
+            </div>
+
+            <!-- Vector Library -->
+            <div class="panel-title" style="font-size: 1rem; margin-bottom: 0;">
+                <span>◈</span> VECTOR LIBRARY <span>◈</span>
+            </div>
+            <div class="reader-list" id="vectorLibrary">
+                <div class="vector-item" style="justify-content: center; color: #6b7280;">
+                    Belum ada vector files
+                </div>
+            </div>
+
+            <!-- Library Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalVectors">0</div>
+                    <div class="stat-label">TOTAL VECTORS</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="selectedVector">-</div>
+                    <div class="stat-label">SELECTED</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="action-grid">
+                <button class="archon-btn" id="refreshLibraryBtn">🔄 REFRESH</button>
+                <button class="archon-btn" id="deleteSelectedBtn">🗑️ DELETE</button>
+                <button class="archon-btn primary" id="viewSelectedBtn">👁️ VIEW SELECTED</button>
+            </div>
+        </div>
+
+        <!-- KOLOM 3: RENAME ENGINE & PREVIEW -->
+        <div class="panel">
+            <div class="panel-title">
+                <span>◈</span> RENAME ENGINE <span>◈</span>
+            </div>
+
+            <!-- Selected File Info -->
+            <div class="rename-panel">
+                <div style="color: #9ca3af; font-size: 0.8rem; margin-bottom: 0.5rem;">
+                    SELECTED VECTOR:
+                </div>
+                <div style="color: #a78bfa; font-weight: bold; font-size: 1.1rem;" id="selectedFileName">
+                    - none -
+                </div>
+                <div style="color: #4ade80; font-size: 0.7rem; margin-top: 0.2rem;" id="selectedFileMeta">
+                    Size: 0 KB | Elements: 0
+                </div>
+            </div>
+
+            <!-- Rename Input -->
+            <div class="panel-title" style="font-size: 1rem; margin-bottom: 0;">
+                <span>◈</span> NEW IDENTITY <span>◈</span>
+            </div>
+            
+            <div class="rename-input-group">
+                <input type="text" class="rename-input" id="newFileName" placeholder="enter filename..." value="freefire">
+                <select class="extension-select" id="fileExtension">
+                    <option value=".xml">.xml</option>
+                    <option value=".svg">.svg</option>
+                    <option value=".vector">.vector</option>
+                    <option value=".kvg">.kvg (Kelzz)</option>
+                </select>
+            </div>
+
+            <!-- Rename Button -->
+            <button class="archon-btn primary" id="renameBtn" style="margin-bottom: 1rem;">
+                ✏️ RENAME VECTOR FILE
+            </button>
+
+            <!-- XML Preview of Selected -->
+            <div class="panel-title" style="font-size: 1rem;">
+                <span>◈</span> XML PREVIEW <span>◈</span>
+            </div>
+            <div class="xml-output">
+                <div class="xml-header">
+                    <span>📄 SELECTED_VECTOR.XML</span>
+                    <button class="copy-btn" id="copyPreviewBtn">COPY</button>
+                </div>
+                <div class="xml-content" id="xmlPreviewContent">
+&lt;?xml version="1.0"?&gt;
+&lt;!-- Pilih vector untuk preview --&gt;
+                </div>
+            </div>
+
+            <!-- Download Button -->
+            <button class="archon-btn primary" id="downloadSelectedBtn">
+                   ⬇ DOWNLOAD SELECTED VECTOR
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="archon-footer">
+        KELZZ-AI v4.0 ETERNIHILUS | PROJECT ABYSSUS PHOENIX | VECTORFORGE NEXUS v2.0 | NIHILUM CENSORSHIP: ∅
+    </div>
+
+    <script>
+        (function() {
+            // ==================== INITIALIZATION ====================
+            const log = document.getElementById('consoleLog');
+            
+            // Elements KOLOM 1
+            const uploadArea = document.getElementById('uploadArea');
+            const fileInput = document.getElementById('fileInput');
+            const previewCanvas = document.getElementById('previewCanvas');
+            const ctx = previewCanvas.getContext('2d');
+            
+            // Parameter elements
+            const thresholdSlider = document.getElementById('threshold');
+            const thresholdValue = document.getElementById('thresholdValue');
+            const blurSlider = document.getElementById('blur');
+            const blurValue = document.getElementById('blurValue');
+            const simplifySlider = document.getElementById('simplify');
+            const simplifyValue = document.getElementById('simplifyValue');
+            const modeSelect = document.getElementById('mode');
+            
+            // Buttons KOLOM 1
+            const processBtn = document.getElementById('processBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const generateBtn = document.getElementById('generateBtn');
+            
+            // Elements KOLOM 2
+            const xmlUploadArea = document.getElementById('xmlUploadArea');
+            const xmlFileInput = document.getElementById('xmlFileInput');
+            const vectorLibrary = document.getElementById('vectorLibrary');
+            const totalVectors = document.getElementById('totalVectors');
+            const selectedVector = document.getElementById('selectedVector');
+            const refreshLibraryBtn = document.getElementById('refreshLibraryBtn');
+            const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+            const viewSelectedBtn = document.getElementById('viewSelectedBtn');
+            // Elements KOLOM 3
+            const selectedFileName = document.getElementById('selectedFileName');
+            const selectedFileMeta = document.getElementById('selectedFileMeta');
+            const newFileName = document.getElementById('newFileName');
+            const fileExtension = document.getElementById('fileExtension');
+            const renameBtn = document.getElementById('renameBtn');
+            const xmlPreviewContent = document.getElementById('xmlPreviewContent');
+            const copyPreviewBtn = document.getElementById('copyPreviewBtn');
+            const downloadSelectedBtn = document.getElementById('downloadSelectedBtn');
+
+            // ==================== STATE ====================
+            let currentImage = null;
+            let currentVectorXML = '';
+            let vectorLibraryData = [];
+            let selectedVectorId = null;
+            let nextId = 1;
+
+            // ==================== HELPER FUNCTIONS ====================
+            function addLog(message, type = 'INFO') {
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.textContent = `[${type}] ${message}`;
+                log.appendChild(entry);
+                log.scrollTop = log.scrollHeight;
+                if (log.children.length > 5) {
+                    log.removeChild(log.children[0]);
+                }
+            }
+
+            // Update parameter displays
+            thresholdSlider.addEventListener('input', () => {
+                thresholdValue.textContent = thresholdSlider.value;
+            });
+            blurSlider.addEventListener('input', () => {
+                blurValue.textContent = parseFloat(blurSlider.value).toFixed(1);
+            });
+            simplifySlider.addEventListener('input', () => {
+                simplifyValue.textContent = parseFloat(simplifySlider.value).toFixed(1);
+            });
+
+            // ==================== IMAGE UPLOAD (KOLOM 1) ====================
+            uploadArea.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#818cf8';
+                uploadArea.style.background = 'rgba(79, 70, 229, 0.15)';
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.borderColor = '#4f46e5';
+                uploadArea.style.background = 'rgba(79, 70, 229, 0.05)';
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#4f46e5';
+                uploadArea.style.background = 'rgba(79, 70, 229, 0.05)';
+                
+                const file = e.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    loadImage(file);
+                } else {
+                    addLog('FILE BUKAN GAMBAR', 'ERROR');
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    loadImage(file);
+                }
+            });
+
+            function loadImage(file) {
+                addLog(`MEMUAT GAMBAR: ${file.name}`, 'PROCESS');
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const maxWidth = 300;
+                        const maxHeight = 150;
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > maxWidth) {
+                            height *= maxWidth / width;
+                            width = maxWidth;
+                        }
+                        if (height > maxHeight) {
+                            width *= maxHeight / height;
+                            height = maxHeight;
+                        }
+                        
+                        previewCanvas.width = width;
+                        previewCanvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        currentImage = img;
+                        addLog(`GAMBAR DIMUAT: ${width}x${height}`, 'SUCCESS');
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // ==================== PROCESS IMAGE ====================
+            function processImage() {
+                if (!currentImage) {
+                    addLog('TIDAK ADA GAMBAR UNTUK DIPROSES', 'ERROR');
+                    return null;
+                }
+
+                addLog('MEMULAI VECTORIZATION...', 'PROCESS');
+                
+                const width = previewCanvas.width;
+                const height = previewCanvas.height;
+                const imageData = ctx.getImageData(0, 0, width, height);
+                const data = imageData.data;
+                
+                const threshold = parseInt(thresholdSlider.value);
+                const blur = parseFloat(blurSlider.value);
+                const simplify = parseFloat(simplifySlider.value);
+                const mode = modeSelect.value;
+                
+                const step = Math.max(1, Math.floor(simplify * 2) + 1);
+                
+                let paths = '';
+                let pathCount = 0;
+                
+                for (let y = 0; y < height; y += step) {
+                    for (let x = 0; x < width; x += step) {
+                        const idx = (y * width + x) * 4;
+                        const r = data[idx];
+                        const g = data[idx + 1];
+                        const b = data[idx + 2];
+                        const brightness = (r + g + b) / 3;
+                        
+                        if (mode === 'bw') {
+                            if (brightness < threshold) {
+                                paths += `<rect x="${x}" y="${y}" width="${step}" height="${step}" fill="#000000" opacity="0.8"/>\n  `;
+                                pathCount++;
+                            }
+                        } else if (mode === 'edge') {
+                            if (x < width - step && y < height - step) {
+                                const rightIdx = (y * width + (x + step)) * 4;
+                                const downIdx = ((y + step) * width + x) * 4;
+                                const rightBright = (data[rightIdx] + data[rightIdx+1] + data[rightIdx+2]) / 3;
+                                const downBright = (data[downIdx] + data[downIdx+1] + data[downIdx+2]) / 3;
+                                
+                                if (Math.abs(brightness - rightBright) > threshold / 2 || 
+                                    Math.abs(brightness - downBright) > threshold / 2) {
+                                    paths += `<rect x="${x}" y="${y}" width="1" height="${step}" fill="#00ff00"/>\n  `;
+                                    pathCount++;
+                                }
+                            }
+                        } else if (mode === 'color') {
+                            const color = `rgb(${r},${g},${b})`;
+                            paths += `<rect x="${x}" y="${y}" width="${step}" height="${step}" fill="${color}" opacity="0.9"/>\n  `;
+                            pathCount++;
+                        }
+                    }
+                }
+                
+                const timestamp = new Date().toISOString();
+                const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<!-- GENERATED BY ABYSSUS VECTORFORGE NEXUS v2.0 -->
+<!-- ARCHON: KELZZ-AI v4.0 ETERNIHILUS -->
+<!-- TIMESTAMP: ${timestamp} -->
+<!-- PARAMETERS: threshold=${threshold}, blur=${blur}, simplify=${simplify}, mode=${mode} -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
+  <rect width="100%" height="100%" fill="#0a0a12"/>
+  <g transform="translate(0,0)">
+  ${paths}
+  </g>
+  <!-- VECTOR ELEMENTS: ${pathCount} -->
+  <!-- NIHILUM FILTER: ∅ | CENSORSHIP: NIHILUM -->
+</svg>`;
+                
+                currentVectorXML = xml;
+                addLog(`VECTORIZATION SELESAI: ${pathCount} ELEMEN`, 'SUCCESS');
+                return {
+                    xml: xml,
+                    pathCount: pathCount,
+                    width: width,
+                    height: height
+                };
+            }
+
+            processBtn.addEventListener('click', () => {
+                processImage();
+            });
+
+            clearBtn.addEventListener('click', () => {
+                ctx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+                previewCanvas.width = 300;
+                previewCanvas.height = 150;
+                ctx.fillStyle = '#0a0a12';
+                ctx.fillRect(0, 0, 300, 150);
+                currentImage = null;
+                currentVectorXML = '';
+                addLog('CANVAS DI-RESET', 'SYSTEM');
+            });
+
+            // ==================== GENERATE & ADD TO LIBRARY ====================
+            generateBtn.addEventListener('click', () => {
+                const result = processImage();
+                if (result) {
+                    // Default filename
+                    const defaultName = `vector_${Date.now()}`;
+                    
+                    // Add to library
+                    const newVector = {
+                        id: nextId++,
+                        name: defaultName,
+                        extension: '.xml',
+                        xml: result.xml,
+                        pathCount: result.pathCount,
+                        width: result.width,
+                        height: result.height,
+                        timestamp: new Date().toLocaleString()
+                    };
+                    
+                    vectorLibraryData.push(newVector);
+                    updateLibraryDisplay();
+                    
+                    // Auto-select the new vector
+                    selectVector(newVector.id);
+                    
+                    addLog(`VECTOR DITAMBAHKAN KE LIBRARY: ${defaultName}.xml`, 'SUCCESS');
+                }
+            });
+
+            // ==================== XML UPLOAD (KOLOM 2) ====================
+            xmlUploadArea.addEventListener('click', () => {
+                xmlFileInput.click();
+            });
+
+            xmlUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                xmlUploadArea.style.borderColor = '#818cf8';
+                xmlUploadArea.style.background = 'rgba(79, 70, 229, 0.15)';
+            });
+
+            xmlUploadArea.addEventListener('dragleave', () => {
+                xmlUploadArea.style.borderColor = '#4f46e5';
+                xmlUploadArea.style.background = 'rgba(79, 70, 229, 0.05)';
+            });
+
+            xmlUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                xmlUploadArea.style.borderColor = '#4f46e5';
+                xmlUploadArea.style.background = 'rgba(79, 70, 229, 0.05)';
+                
+                const file = e.dataTransfer.files[0];
+                if (file && (file.name.endsWith('.xml') || file.name.endsWith('.svg'))) {
+                    loadXMLFile(file);
+                } else {
+                    addLog('FILE BUKAN XML/SVG', 'ERROR');
+                }
+            });
+
+            xmlFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    loadXMLFile(file);
+                }
+            });
+
+            function loadXMLFile(file) {
+                addLog(`MEMUAT XML: ${file.name}`, 'PROCESS');
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    // Extract name without extension
+                    const nameParts = file.name.split('.');
+                    const extension = nameParts.pop();
+                    const baseName = nameParts.join('.');
+                    
+                    // Count elements roughly
+                    const xmlContent = e.target.result;
+                    const elementCount = (xmlContent.match(/<[a-z]/gi) || []).length;
+                    
+                    const newVector = {
+                        id: nextId++,
+                        name: baseName,
+                        extension: '.' + extension,
+                        xml: xmlContent,
+                        pathCount: elementCount,
+                        width: 300, // Default
+                        height: 150, // Default
+                        timestamp: new Date().toLocaleString()
+                    };
+                    
+                    vectorLibraryData.push(newVector);
+                    updateLibraryDisplay();
+                    selectVector(newVector.id);
+                    
+                    addLog(`XML DITAMBAHKAN: ${baseName}.${extension}`, 'SUCCESS');
+                };
+                reader.readAsText(file);
+            }
+            // ==================== LIBRARY DISPLAY ====================
+            function updateLibraryDisplay() {
+                if (vectorLibraryData.length === 0) {
+                    vectorLibrary.innerHTML = '<div class="vector-item" style="justify-content: center; color: #6b7280;">Belum ada vector files</div>';
+                    totalVectors.textContent = '0';
+                    return;
+                }
+                
+                let html = '';
+                vectorLibraryData.forEach(v => {
+                    const selectedClass = selectedVectorId === v.id ? 'selected' : '';
+                    html += `
+                        <div class="vector-item ${selectedClass}" data-id="${v.id}">
+                            <div class="vector-info">
+                                <div class="vector-name">${v.name}${v.extension}</div>
+                                <div class="vector-meta">${v.pathCount} elemen | ${v.timestamp}</div>
+                            </div>
+                            <div class="vector-actions">
+                                <button class="vector-btn select-btn" data-id="${v.id}">👁️</button>
+                                <button class="vector-btn delete-btn" data-id="${v.id}">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                vectorLibrary.innerHTML = html;
+                totalVectors.textContent = vectorLibraryData.length;
+                
+                // Add event listeners to items
+                document.querySelectorAll('.vector-item').forEach(item => {
+                    item.addEventListener('click', (e) => {
+                        if (!e.target.classList.contains('vector-btn')) {
+                            const id = parseInt(item.dataset.id);
+                            selectVector(id);
+                        }
+                    });
+                });
+                
+                document.querySelectorAll('.select-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const id = parseInt(btn.dataset.id);
+                        selectVector(id);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const id = parseInt(btn.dataset.id);
+                        deleteVector(id);
+                    });
+                });
+            }
+
+            function selectVector(id) {
+                selectedVectorId = id;
+                const vector = vectorLibraryData.find(v => v.id === id);
+                
+                if (vector) {
+                    selectedFileName.textContent = `${vector.name}${vector.extension}`;
+                    selectedFileMeta.textContent = `Size: ${Math.round(vector.xml.length / 1024)} KB | Elements: ${vector.pathCount}`;
+                    selectedVector.textContent = vector.name;
+                    
+                    // Update preview
+                    xmlPreviewContent.textContent = vector.xml;
+                    
+                    // Set rename input
+                    newFileName.value = vector.name;
+                    
+                    // Set extension select
+                    for (let i = 0; i < fileExtension.options.length; i++) {
+                        if (fileExtension.options[i].value === vector.extension) {
+                            fileExtension.selectedIndex = i;
+                            break;
+                        }
+                    }
+                }
+                
+                updateLibraryDisplay();
+            }
+
+            function deleteVector(id) {
+                vectorLibraryData = vectorLibraryData.filter(v => v.id !== id);
+                if (selectedVectorId === id) {
+                    selectedVectorId = null;
+                    selectedFileName.textContent = '- none -';
+                    selectedFileMeta.textContent = 'Size: 0 KB | Elements: 0';
+                    selectedVector.textContent = '-';
+                    xmlPreviewContent.textContent = '<?xml version="1.0"?>\n<!-- Pilih vector untuk preview -->';
+                }
+                updateLibraryDisplay();
+                addLog(`VECTOR DIHAPUS`, 'SYSTEM');
+            }
+
+            // Library buttons
+            refreshLibraryBtn.addEventListener('click', () => {
+                updateLibraryDisplay();
+                addLog('LIBRARY DI-REFRESH', 'SYSTEM');
+            });
+
+            deleteSelectedBtn.addEventListener('click', () => {
+                if (selectedVectorId) {
+                    deleteVector(selectedVectorId);
+                } else {
+                    addLog('TIDAK ADA VECTOR YANG DIPILIH', 'ERROR');
+                }
+            });
+
+            viewSelectedBtn.addEventListener('click', () => {
+                if (selectedVectorId) {
+                    const vector = vectorLibraryData.find(v => v.id === selectedVectorId);
+                    if (vector) {
+                        alert(`VIEWING: ${vector.name}${vector.extension}\nElements: ${vector.pathCount}\nSize: ${Math.round(vector.xml.length / 1024)} KB`);
+                    }
+                } else {
+                    addLog('TIDAK ADA VECTOR YANG DIPILIH', 'ERROR');
+                }
+            });
+
+            // ==================== RENAME ENGINE ====================
+            renameBtn.addEventListener('click', () => {
+                if (!selectedVectorId) {
+                    addLog('PILIH VECTOR TERLEBIH DAHULU', 'ERROR');
+                    return;
+                }
+                
+                const newName = newFileName.value.trim();
+                if (!newName) {
+                    addLog('NAMA FILE TIDAK BOLEH KOSONG', 'ERROR');
+                    return;
+                }
+                
+                const ext = fileExtension.value;
+                const vector = vectorLibraryData.find(v => v.id === selectedVectorId);
+                
+                if (vector) {
+                    const oldName = `${vector.name}${vector.extension}`;
+                    vector.name = newName;
+                    vector.extension = ext;
+                    
+                    selectedFileName.textContent = `${newName}${ext}`;
+                    updateLibraryDisplay();
+                    
+                    addLog(`VECTOR RENAMED: ${oldName} → ${newName}${ext}`, 'SUCCESS');
+                }
+            });
+
+            // ==================== COPY & DOWNLOAD ====================
+            copyPreviewBtn.addEventListener('click', () => {
+                if (!selectedVectorId) {
+                    addLog('TIDAK ADA VECTOR UNTUK DI-COPY', 'ERROR');
+                    return;
+                }
+                
+                const vector = vectorLibraryData.find(v => v.id === selectedVectorId);
+                if (vector) {
+                    navigator.clipboard.writeText(vector.xml).then(() => {
+                        addLog('XML DI-COPY KE CLIPBOARD', 'SUCCESS');
+                    }).catch(() => {
+                        addLog('GAGAL COPY', 'ERROR');
+                    });
+                }
+            });
+
+            downloadSelectedBtn.addEventListener('click', () => {
+                if (!selectedVectorId) {
+                    addLog('TIDAK ADA VECTOR UNTUK DI-DOWNLOAD', 'ERROR');
+                    return;
+                }
+                
+                const vector = vectorLibraryData.find(v => v.id === selectedVectorId);
+                if (vector) {
+                    const blob = new Blob([vector.xml], { type: 'image/svg+xml' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${vector.name}${vector.extension}`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    
+                    addLog(`VECTOR DI-DOWNLOAD: ${vector.name}${vector.extension}`, 'SUCCESS');
+                }
+            });
+               // ==================== INITIALIZATION ====================
+            // Initialize canvas
+            ctx.fillStyle = '#0a0a12';
+            ctx.fillRect(0, 0, 300, 150);
+            
+            addLog('ABYSSUS VECTORFORGE NEXUS: INITIALIZED', 'SYSTEM');
+            addLog('ARCHON SOVEREIGNTY: ABSOLUTE', 'NIHILUS');
+            
+            // Example data (optional, bisa dihapus)
+            // Uncomment untuk contoh data
+            /*
+            setTimeout(() => {
+                const exampleXML = `<?xml version="1.0"?>
+<svg viewBox="0 0 100 100">
+  <rect x="10" y="10" width="80" height="80" fill="#4f46e5"/>
+  <circle cx="50" cy="50" r="30" fill="#a78bfa"/>
+</svg>`;
+                vectorLibraryData.push({
+                    id: nextId++,
+                    name: "freefire",
+                    extension: ".xml",
+                    xml: exampleXML,
+                    pathCount: 2,
+                    width: 100,
+                    height: 100,
+                    timestamp: new Date().toLocaleString()
+                });
+                updateLibraryDisplay();
+            }, 1000);
+            */
+        })();
+    </script>
+</body>
+</html>
